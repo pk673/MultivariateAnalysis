@@ -1,0 +1,69 @@
+---
+title: "Assignment 1"
+author: "pk673@scarletmail.rutgers.edu"
+output: html_document
+date: "2023-02-01"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+## Assignment : As the professor mentioned, one homework is to create 2 separate matrices: 1 for survived sparrows and 1 for non-survived sparrows. Then, we can calculate col_means, create covariance matrices and correlation matrices.
+
+#install required packages
+library(readr)
+library(HSAUR2)
+library(MVA)
+
+
+#Import Sparrow dataset 
+Bumpus_sparrows <- read_csv("~/Downloads/Bumpus_sparrows.csv")
+Bumpus_sparrows
+sparr <- Bumpus_sparrows
+sparr
+
+#Creating a subset for Survived sparrows(S)
+Survived <- subset(sparr, Survivorship == "S")
+Survived
+is.vector(Survived)
+is.matrix(Survived)
+class(Survived)
+attributes(Survived)
+
+sparr_s <- Survived
+sparr_s
+sparr_s[,-1]
+#We will drop column 1 as it does not contain a number
+sparr_s.num <- sparr_s[,-1]
+sparr_s.num
+# Computing the means of each variable in data frame sparr_s.num
+colMeans(sparr_s.num)
+# Covariance matrix
+cov(sparr_s.num)
+# Correlation matrix
+cor(sparr_s.num)
+
+#Creating a subset for sparrows that did Not Survive (NS)
+NotSurvived <- subset(sparr, Survivorship == "NS")
+NotSurvived
+is.vector(NotSurvived)
+is.matrix(NotSurvived)
+class(NotSurvived)
+attributes(NotSurvived)
+
+sparr_ns <- NotSurvived
+sparr_ns
+sparr_ns[,-1]
+#We will drop column 1 as it does not contain a number
+sparr_ns.num <- sparr_s[,-1]
+sparr_ns.num
+# Computing the means of each variable in data frame sparr_ns.num
+colMeans(sparr_ns.num)
+# Covariance matrix
+cov(sparr_ns.num)
+# Correlation matrix
+cor(sparr_ns.num)
