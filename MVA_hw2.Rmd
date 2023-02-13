@@ -1,0 +1,162 @@
+---
+title: "Assignment 2"
+author: "pk673@scarletmail.rutgers.edu"
+output: html_document
+date: "2023-02-11"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+```
+
+## R Markdown
+```{r}
+#install required packages
+library(readr)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggthemes)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(HSAUR2)
+library(MVA)
+library(ggridges)
+library(cowplot)
+library(hexbin)
+
+#Import Sparrow dataset 
+Bumpus_sparrows <- read_csv("~/Downloads/Bumpus_sparrows.csv")
+Bumpus_sparrows
+sparrows <- Bumpus_sparrows
+sparrows
+
+boxplot(sparrows[,2:6])
+stars(sparrows,labels = sparrows$Survivorship) # for understanding if observations are related or not, if they are similar
+
+# box plot
+ggplot(sparrows, aes(x=Survivorship, y=Total_length)) + geom_boxplot()
+## Sparrows with the higher total length did not survive as compared to sparrows with smaller total length
+
+
+attach(sparrows)
+
+#Plots
+sparr.birds <- data.frame(as.numeric(rownames(sparrows)),sparrows[,2:6])
+labs.diagonal <- c("Bird","Total length","Alar extent","L. beak & head","L. humerous","L. keel & sternum")
+
+plot(Total_length, Alar_extent,xlab="Total Length (mm)",ylab="Alar extent (nm)",pch=c(16,1))
+
+# Correlations
+pairs(sparrows[,2:6])
+
+# A Different View on Correlation Matrix
+library(SciViews)
+pairs(sparr.birds, diag.panel = panel.boxplot, labels=labs.diagonal,pch=c(1,16),font.labels=2)
+
+# 3 Dimensional Plots
+library(scatterplot3d)
+s3d <- scatterplot3d(Alar_extent,Total_length,L_beak_head,pch=c(1,16)[as.numeric(Survivorship)],xlab="Alar extent", ylab="", angle=45,zlab="Length of beak and head", lty.hide=2,type="h",y.margin.add=0.1,font.axis=2,font.lab=2)
+
+legend(s3d$xyz.convert(238, 160, 34.1),c("Non-survivor","Survivor"),pch=c(1,16),text.font=2)
+
+#scatterplotMatrix
+library(car)
+scatterplotMatrix(~Total_length+Alar_extent+L_beak_head+L_humerous+L_keel_sternum | Survivorship, data=sparr.birds, var.labels=labs.diagonal,cex.labels=0.7, diagonal="boxplot",smooth=FALSE,reg.line=FALSE,pch=c(1,16),col=rep("black",2), legend.plot=FALSE)
+
+library(lattice)
+super.sym <- trellis.par.get("superpose.symbol")
+super.sym$superpose.symbol$pch <- c(1,16,rep(1,5))
+super.sym$superpose.symbol$col <- c("#0000FF","#FF69B4",rep(1,5))
+trellis.par.set(super.sym)
+splom(~sparr.birds, groups = Survivorship, data = sparr.birds, ps=0.5, varname.cex = .5,panel = panel.superpose,key = list(columns = 2,points = list(pch = super.sym$pch[1:2], col=super.sym$col[1:2]),text = list(c("Non-survivor", "Survivor"))))
+
+library(GGally)
+ggscatmat(sparrows, columns=2:6, color="Survivorship")
+
+
+# bar chart
+ggplot(sparrows, aes(x=L_keel_sternum) )+ geom_bar(position="stack",fill='blue') 
+## Most number of sparrows have the length of keel_sternum equal to 20.3
+
+# histogram
+ggplot(sparrows, aes(x=Total_length))+geom_histogram(fill='red', color='black', binwidth=5)
+## 20 sparrows have the Total_length between 152.5 to 157.5 while 2 sparrows have it in the range 147.5 to 152.5
+
+
+#exploring GGplot
+
+p <- ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head))
+p + geom_point() 
+p+ geom_point() + geom_smooth()
+p + geom_point() + geom_smooth(method = "lm") 
+p + geom_point() + geom_smooth(method = "gam") + scale_x_log10()
+
+p + geom_point() +geom_smooth(method = "gam") + scale_x_log10(labels = scales::dollar)
+
+p <-  ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head, color = Survivorship))
+
+p + geom_point(color = "purple") + geom_smooth(method = "loess") + scale_x_log10()
+
+
+p + geom_point(alpha = 0.3) + geom_smooth(color = "orange", se = FALSE, size = 8, method = "lm") + scale_x_log10()
+
+p + geom_point(alpha = 0.3) + geom_smooth(method = "gam") + scale_x_log10(labels = scales::dollar) + labs(x = "Total length", y = "Beak Head",
+         title = "Survivorship of Sparrows",
+         subtitle = "Survivorship vs non-Survivorship",
+         caption = "Source: Bumpus_sparrows")
+
+p <- ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head, color = Survivorship))
+p + geom_point() + geom_smooth(method = "loess") + scale_x_log10()
+
+
+p <- ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head, color = Survivorship, fill = Survivorship))
+p + geom_point() + geom_smooth(method = "loess") + scale_x_log10()
+
+
+p <- ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head))
+p + geom_point(mapping = aes(color = Survivorship)) +
+    geom_smooth(method = "loess") +
+    scale_x_log10()
+
+ggplot(sparrows, aes(x=Alar_extent,y=Total_length)) + facet_wrap(~Survivorship) + geom_point()
+
+
+
+# violin plot 
+ggplot(sparrows, aes(x=Total_length, y=Alar_extent)) + geom_violin()
+
+
+# hexbin
+#ggplot(sparrows, aes(x=Total_length, y=Alar_extent)) + geom_hex() 
+ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head))+ geom_hex() 
+
+
+# density plot and ggridges
+ggplot(sparrows, aes(x=L_humerous)) + geom_density() 
+
+
+ggplot(sparrows, aes(x=Total_length, y=Survivorship)) + geom_density_ridges() 
+
+
+# with ggthemes  
+
+lastplot <- ggplot(data = sparrows, mapping = aes(x = Total_length,y = L_beak_head))
+lastplot <- lastplot + geom_point(mapping = aes(color = Survivorship)) + stat_smooth() + 
+  labs(x="Total length of sparrows", y="Beak head of sparrows", title="Sparrows Data") 
+
+lastplot + theme_bw()
+lastplot + theme_cowplot()
+lastplot + theme_dark()
+lastplot + theme_economist()
+lastplot + theme_fivethirtyeight()
+lastplot + theme_tufte()
+lastplot + theme_wsj()
+
+
