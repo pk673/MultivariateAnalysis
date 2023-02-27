@@ -1,0 +1,631 @@
+---
+title: "MVA Assignment 3"
+author: "pk673@scarletmail.rutgers.edu"
+date: "2023-02-27"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+```
+
+## R Markdown
+```{r}
+
+library(readr)
+library(Hotelling)
+library(car)
+library(stats)
+library(biotools)
+
+
+# Load the dataset
+ 
+BreastCancer_data <- read_csv("~/Downloads/wdbc.data")
+names(BreastCancer_data) <- c('ID', 'Diagnosis', 'mean_radius', 'mean_texture', 'mean_perimeter', 'mean_area', 'mean_smoothness', 'mean_compactness', 'mean_concavity', 'mean_concave_points', 'mean_symmetry', 'mean_fractal_dimension', 'se_radius', 'se_texture', 'se_perimeter', 'se_area', 'se_smoothness', 'se_compactness', 'se_concavity', 'se_concave_points', 'se_symmetry', 'se_fractal_dimension', 'worst_radius', 'worst_texture', 'worst_perimeter', 'worst_area', 'worst_smoothness', 'worst_compactness', 'worst_concavity', 'worst_concave_points', 'worst_symmetry', 'worst_fractal_dimension')
+BreastCancer_data
+BC_data <- BreastCancer_data
+BC_data
+
+attach(BC_data)
+str(BC_data)
+
+BC_data$Diagnosis <- as.factor(BC_data$Diagnosis)
+
+BC_data_x <- BC_data[, 3:32]
+BC_data_x
+
+BC_data_cm <- colMeans(BC_data_x)
+BC_data_S <- cov(BC_data_x)
+BC_data_d <- apply(BC_data_x, MARGIN = 1, function(BC_data_x)t(BC_data_x - BC_data_cm) %*% solve(BC_data_S) %*% (BC_data_x - BC_data_cm))
+BC_data_cm
+BC_data_S
+BC_data_d
+
+# t-tests, one by one. Benign vs Malignant
+with(data=BC_data,t.test(mean_radius[Diagnosis=="M"],mean_radius[Diagnosis=="B"],var.equal=TRUE))
+## the p-value (=p-value < 2.2e-16) is less than the significance level (typically 0.05), we can reject the null hypothesis that the mean radius of the two groups is equal. In other words, we can conclude that there is a significant difference in the mean radius between the benign and malignant groups.
+
+with(data=BC_data,t.test(mean_texture[Diagnosis=="M"],mean_texture[Diagnosis=="B"],var.equal=TRUE))
+## the p-value (=p-value < 2.2e-16) is less than the significance level (typically 0.05), we can reject the null hypothesis that the mean_texture of the two groups is equal. In other words, we can conclude that there is a significant difference in the mean_texture between the benign and malignant groups.
+
+with(data=BC_data,t.test(mean_perimeter[Diagnosis=="M"],mean_perimeter[Diagnosis=="B"],var.equal=TRUE))
+## the p-value (=p-value < 2.2e-16) is less than the significance level (typically 0.05), we can reject the null hypothesis that the mean_perimeter of the two groups is equal. In other words, we can conclude that there is a significant difference in the mean_perimeter between the benign and malignant groups.
+
+with(data=BC_data,t.test(mean_area[Diagnosis=="M"],mean_area[Diagnosis=="B"],var.equal=TRUE))
+## the p-value (=p-value < 2.2e-16) is less than the significance level (typically 0.05), we can reject the null hypothesis that the mean_area of the two groups is equal. In other words, we can conclude that there is a significant difference in the mean_area between the benign and malignant groups.
+
+with(data=BC_data,t.test(mean_smoothness[Diagnosis=="M"],mean_smoothness[Diagnosis=="B"],var.equal=TRUE))
+
+with(data=BC_data,t.test(mean_compactness[Diagnosis=="M"],mean_compactness[Diagnosis=="B"],var.equal=TRUE))
+
+with(data=BC_data,t.test(mean_concavity[Diagnosis=="M"],mean_concavity[Diagnosis=="B"],var.equal=TRUE))
+
+with(data=BC_data,t.test(mean_concave_points[Diagnosis=="M"],mean_concave_points[Diagnosis=="B"],var.equal=TRUE))
+
+with(data=BC_data,t.test(mean_symmetry[Diagnosis=="M"],mean_symmetry[Diagnosis=="B"],var.equal=TRUE))
+##p-value = 1.188e-15
+with(data=BC_data,t.test(mean_fractal_dimension[Diagnosis=="M"],mean_fractal_dimension[Diagnosis=="B"],var.equal=TRUE))
+## p-value = 0.6669 In this case, the p-value is much larger than 0.05, indicating that we do not have enough evidence to reject the null hypothesis. Therefore, we fail to reject the null hypothesis and conclude that there is not enough evidence to support the alternative hypothesis.
+with(data=BC_data,t.test(se_radius[Diagnosis=="M"],se_radius[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(se_texture[Diagnosis=="M"],se_texture[Diagnosis=="B"],var.equal=TRUE))
+##  p-value = 0.8673
+
+with(data=BC_data,t.test(se_perimeter[Diagnosis=="M"],se_perimeter[Diagnosis=="B"],var.equal=TRUE))
+##  p-value < 2.2e-16
+with(data=BC_data,t.test(se_area[Diagnosis=="M"],se_area[Diagnosis=="B"],var.equal=TRUE))
+##  p-value < 2.2e-16
+
+with(data=BC_data,t.test(se_smoothness[Diagnosis=="M"],se_smoothness[Diagnosis=="B"],var.equal=TRUE))
+## p-value = 0.1127
+with(data=BC_data,t.test(se_compactness[Diagnosis=="M"],se_compactness[Diagnosis=="B"],var.equal=TRUE))
+## p-value = 1.546e-12
+with(data=BC_data,t.test(se_concavity[Diagnosis=="M"],se_concavity[Diagnosis=="B"],var.equal=TRUE))
+## p-value = 1.026e-09
+with(data=BC_data,t.test(se_concave_points[Diagnosis=="M"],se_concave_points[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(se_symmetry[Diagnosis=="M"],se_symmetry[Diagnosis=="B"],var.equal=TRUE))
+## p-value = 0.8274
+with(data=BC_data,t.test(se_fractal_dimension[Diagnosis=="M"],se_fractal_dimension[Diagnosis=="B"],var.equal=TRUE))
+## p-value = 0.07006
+
+with(data=BC_data,t.test(worst_radius[Diagnosis=="M"],worst_radius[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_texture[Diagnosis=="M"],worst_texture[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_perimeter[Diagnosis=="M"],worst_perimeter[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_area[Diagnosis=="M"],worst_area[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_smoothness[Diagnosis=="M"],worst_smoothness[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_compactness[Diagnosis=="M"],worst_compactness[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_concavity[Diagnosis=="M"],worst_concavity[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_concave_points[Diagnosis=="M"],worst_concave_points[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+
+with(data=BC_data,t.test(worst_symmetry[Diagnosis=="M"],worst_symmetry[Diagnosis=="B"],var.equal=TRUE))
+## p-value < 2.2e-16
+with(data=BC_data,t.test(worst_fractal_dimension[Diagnosis=="M"],worst_fractal_dimension[Diagnosis=="B"],var.equal=TRUE))
+##  p-value = 4.452e-15
+
+library(Hotelling)
+t2testBC_data <- hotelling.test(mean_radius + mean_texture + mean_perimeter + mean_area + mean_smoothness + mean_compactness + mean_concavity + mean_concave_points + mean_symmetry + mean_fractal_dimension + se_radius + se_texture + se_perimeter + se_area + se_smoothness + se_compactness + se_concavity + se_concave_points + se_symmetry + se_fractal_dimension + worst_radius + worst_texture + worst_perimeter + worst_area + worst_smoothness + worst_compactness + worst_concavity + worst_concave_points + worst_symmetry + worst_fractal_dimension ~ Diagnosis, data=BC_data)
+t2testBC_data
+# Output of the function hotelling.test is given
+cat("T2 statistic =",t2testBC_data$stat[[1]],"\n")
+print(t2testBC_data)
+
+# The output of the hotelling.test function indicates that there is strong evidence against the null hypothesis, as the p-value is less than the significance level (alpha) of 0.05. Specifically, the output includes: The test statistic (T-squared): In this case, the test statistic is 1934.8. This measures the distance between the sample means of the groups relative to the within-group variability. A larger T-squared value indicates greater differences between the group means.The degrees of freedom: The numerator degrees of freedom is 30, and the denominator degrees of freedom is 537. These values depend on the number of groups being compared and the sample sizes of each group. The p-value: In this case, the p-value is 0. This is the probability of obtaining a test statistic as extreme or more extreme than the observed value, assuming the null hypothesis is true. A p-value of 0 indicates that the observed test statistic is very unlikely to have occurred by chance, and provides strong evidence against the null hypothesis. 
+
+# Since the p-value is less than alpha, we reject the null hypothesis and conclude that there are significant differences between the group means. However, it's important to note that the interpretation of the results depends on the specific context and the hypothesis being tested.
+
+# Levene's tests based on absolute differences around means using t-tests. Standarizing the data set with scale()
+
+matstand <- scale(BC_data[,3:32])
+matMalignant <- matstand[Diagnosis == "M",]
+
+matBenign <- matstand[Diagnosis == "B",]
+vecmedianbenign <- apply(matBenign, 2, median)
+
+
+# in the above 2 represents column. Hence, we are asking for column median
+
+
+vecmedianmalignant <- apply(matMalignant, 2, median)
+matabsdevbenign <- abs(matBenign - matrix(rep(vecmedianbenign,nrow(matBenign)),nrow=nrow(matBenign), byrow=TRUE))
+
+matabsdevmalignant <- abs(matMalignant - matrix(rep(vecmedianmalignant,nrow(matMalignant)),nrow=nrow(matMalignant), byrow=TRUE))
+
+
+
+matabsdev.all <- rbind(matabsdevbenign,matabsdevmalignant)
+matabsdev.all <- data.frame(Diagnosis, matabsdev.all)
+
+t.test(matabsdev.all$mean_radius[Diagnosis == "M"],matabsdev.all$mean_radius[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+## The null hypothesis for this test is that the mean radius measurements of malignant tumor samples are equal to the mean radius measurements of benign tumor samples. The alternative hypothesis is that the mean radius measurements of malignant tumor samples are less than the mean radius measurements of benign tumor samples. 
+#The p-value is 0.04067, which is less than the commonly used significance level of 0.05. This means that we can reject the null hypothesis and conclude that the mean radius measurements of malignant tumor samples are significantly less than the mean radius measurements of benign tumor samples.
+
+#The 95 percent confidence interval for the difference in means is (-Inf, -0.003737858), which means that we can be 95 percent confident that the true difference in means is between negative infinity and -0.003737858.
+
+#The sample estimates for the mean radius measurements of malignant tumor samples and benign tumor samples are 0.4845537 and 0.5507960, respectively. This means that, on average, the mean radius measurements of benign tumor samples are higher than those of malignant tumor samples.
+
+t.test(matabsdev.all$mean_texture[Diagnosis == "M"],matabsdev.all$mean_texture[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_perimeter[Diagnosis == "M"],matabsdev.all$mean_perimeter[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_area[Diagnosis == "M"],matabsdev.all$mean_area[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_smoothness[Diagnosis == "M"],matabsdev.all$mean_smoothness[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_compactness[Diagnosis == "M"],matabsdev.all$mean_compactness[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_concavity[Diagnosis == "M"],matabsdev.all$mean_concavity[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_concave_points[Diagnosis == "M"],matabsdev.all$mean_concave_points[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_symmetry[Diagnosis == "M"],matabsdev.all$mean_symmetry[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$mean_fractal_dimension[Diagnosis == "M"],matabsdev.all$mean_fractal_dimension[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_radius[Diagnosis == "M"],matabsdev.all$se_radius[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_texture[Diagnosis == "M"],matabsdev.all$se_texture[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_perimeter[Diagnosis == "M"],matabsdev.all$se_perimeter[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_area[Diagnosis == "M"],matabsdev.all$se_area[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_smoothness[Diagnosis == "M"],matabsdev.all$se_smoothness[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_compactness[Diagnosis == "M"],matabsdev.all$se_compactness[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_concavity[Diagnosis == "M"],matabsdev.all$se_concavity[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_concave_points[Diagnosis == "M"],matabsdev.all$se_concave_points[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+
+t.test(matabsdev.all$se_symmetry[Diagnosis == "M"],matabsdev.all$se_symmetry[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$se_fractal_dimension[Diagnosis == "M"],matabsdev.all$se_fractal_dimension[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_radius[Diagnosis == "M"],matabsdev.all$worst_radius[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_texture[Diagnosis == "M"],matabsdev.all$worst_texture[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_perimeter[Diagnosis == "M"],matabsdev.all$worst_perimeter[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_area[Diagnosis == "M"],matabsdev.all$worst_area[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_smoothness[Diagnosis == "M"],matabsdev.all$worst_smoothness[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_compactness[Diagnosis == "M"],matabsdev.all$worst_compactness[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_concavity[Diagnosis == "M"],matabsdev.all$worst_concavity[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_concave_points[Diagnosis == "M"],matabsdev.all$worst_concave_points[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_symmetry[Diagnosis == "M"],matabsdev.all$worst_symmetry[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+t.test(matabsdev.all$worst_fractal_dimension[Diagnosis == "M"],matabsdev.all$worst_fractal_dimension[Diagnosis == "B"], alternative="less",var.equal = TRUE)
+
+matstand.all <- data.frame(Diagnosis, matstand)
+
+colnames(matstand.all) <- colnames(BC_data[2:32])
+t2testcdata <- hotelling.test(mean_radius + mean_texture + mean_perimeter + mean_area + mean_smoothness + mean_compactness + mean_concavity + mean_concave_points + mean_symmetry + mean_fractal_dimension + se_radius + se_texture + se_perimeter + se_area + se_smoothness + se_compactness + se_concavity + se_concave_points + se_symmetry + se_fractal_dimension + worst_radius + worst_texture + worst_perimeter + worst_area + worst_smoothness + worst_compactness + worst_concavity + worst_concave_points + worst_symmetry + worst_fractal_dimension ~ Diagnosis, data=matstand.all)
+cat("T2 statistic =",t2testcdata$stat[[1]],"\n")
+print(t2testcdata)
+
+# In the above we standardized using scale function
+#matabsdev.all
+
+# We can also look at Van Valen's test. Equivalent to the comparison of mean absolute median
+# diferences between two groups. In the sparrows' example, the Van Valen's test
+# is one-sided (Mean dij for survivors < Mean dij for non-survivors)
+# dij is the norm of the individual vector i composed by the absolute
+# deviations computed for all the variables in sample j.
+# These norms define the second column of the data frame d.all
+
+d.all <- data.frame(Diagnosis,sqrt(rowSums(matabsdev.all[,-1]^2)))
+#d.all
+colnames(d.all)[2] <- "dij"
+#d.all
+head(d.all)
+with(d.all, t.test(dij[Diagnosis=="M"], dij[Diagnosis=="B"],var.equal=TRUE, alternative="less"))
+sprintf("d-values for Malignant: Mean = %2.3f, Variance = %2.3f",mean(d.all$dij[Diagnosis=="M"]),var(d.all$dij[Diagnosis=="M"]))
+sprintf("d-values for Benign: Mean = %2.3f, Variance = %2.3f",mean(d.all$dij[Diagnosis=="B"]),var(d.all$dij[Diagnosis=="B"]))
+# Hotelling Test
+
+
+# Leverne test is used to verify Homoscedasticity. It tests if the variance of two samples are # #equal. Levene's test is an inferential statistic used to assess the equality of variances for a #variable calculated for two or more groups.[1] Some common statistical procedures assume that #variances of the populations from which different samples are drawn are equal. Levene's test #assesses this assumption.
+
+
+
+library(car)
+#leveneTest() produces a two-sided test
+leveneTest(mean_radius ~ Diagnosis, data=BC_data)
+leveneTest(mean_texture ~ Diagnosis, data=BC_data)
+leveneTest(mean_perimeter ~ Diagnosis, data=BC_data)
+leveneTest(mean_area ~ Diagnosis, data=BC_data)
+leveneTest(mean_smoothness ~ Diagnosis, data=BC_data)
+leveneTest(mean_compactness ~ Diagnosis, data=BC_data)
+leveneTest(mean_concavity ~ Diagnosis, data=BC_data)
+leveneTest(mean_concave_points ~ Diagnosis, data=BC_data)
+leveneTest(mean_symmetry ~ Diagnosis, data=BC_data)
+leveneTest(mean_fractal_dimension ~ Diagnosis, data=BC_data)
+leveneTest(se_radius ~ Diagnosis, data=BC_data)
+leveneTest(se_texture ~ Diagnosis, data=BC_data)
+leveneTest(se_perimeter ~ Diagnosis, data=BC_data)
+leveneTest(se_area ~ Diagnosis, data=BC_data)
+leveneTest(se_smoothness ~ Diagnosis, data=BC_data)
+leveneTest(se_compactness ~ Diagnosis, data=BC_data)
+leveneTest(se_concavity ~ Diagnosis, data=BC_data)
+leveneTest(se_concave_points ~ Diagnosis, data=BC_data)
+leveneTest(se_symmetry ~ Diagnosis, data=BC_data)
+leveneTest(se_fractal_dimension ~ Diagnosis, data=BC_data)
+leveneTest(worst_radius ~ Diagnosis, data=BC_data)
+leveneTest(worst_texture ~ Diagnosis, data=BC_data)
+leveneTest(worst_perimeter ~ Diagnosis, data=BC_data)
+leveneTest(worst_area ~ Diagnosis, data=BC_data)
+leveneTest(worst_smoothness ~ Diagnosis, data=BC_data)
+leveneTest(worst_compactness ~ Diagnosis, data=BC_data)
+leveneTest(worst_concavity ~ Diagnosis, data=BC_data)
+leveneTest(worst_concave_points ~ Diagnosis, data=BC_data)
+leveneTest(worst_symmetry ~ Diagnosis, data=BC_data)
+leveneTest(worst_fractal_dimension ~ Diagnosis, data=BC_data)
+
+
+
+# ANOVA
+
+summary(aov(mean_radius ~ Diagnosis))
+summary(aov(mean_texture ~ Diagnosis))
+summary(aov(mean_perimeter ~ Diagnosis))
+summary(aov(mean_area ~ Diagnosis))
+summary(aov(mean_smoothness ~ Diagnosis))
+summary(aov(mean_compactness ~ Diagnosis))
+summary(aov(mean_concavity ~ Diagnosis))
+summary(aov(mean_concave_points ~ Diagnosis))
+summary(aov(mean_symmetry ~ Diagnosis))
+summary(aov(mean_fractal_dimension ~ Diagnosis))
+summary(aov(se_radius ~ Diagnosis))
+summary(aov(se_texture ~ Diagnosis))
+summary(aov(se_perimeter ~ Diagnosis))
+summary(aov(se_area ~ Diagnosis))
+summary(aov(se_smoothness ~ Diagnosis))
+summary(aov(se_compactness ~ Diagnosis))
+summary(aov(se_concavity ~ Diagnosis))
+summary(aov(se_concave_points ~ Diagnosis))
+summary(aov(se_symmetry ~ Diagnosis))
+summary(aov(se_fractal_dimension ~ Diagnosis))
+summary(aov(worst_radius ~ Diagnosis))
+summary(aov(worst_texture ~ Diagnosis))
+summary(aov(worst_perimeter ~ Diagnosis))
+summary(aov(worst_area ~ Diagnosis))
+summary(aov(worst_smoothness ~ Diagnosis))
+summary(aov(worst_compactness ~ Diagnosis))
+summary(aov(worst_concavity ~ Diagnosis))
+summary(aov(worst_concave_points ~ Diagnosis))
+summary(aov(worst_symmetry ~ Diagnosis))
+summary(aov(worst_fractal_dimension ~ Diagnosis))
+
+
+# mahalanobis
+library(stats)
+BC_data_MD <- mahalanobis(BC_data_x, BC_data_cm, BC_data_S)
+#BC_data_MD
+BC_data$pvalues <- pchisq(BC_data_MD, df=3, lower.tail=FALSE)
+#BC_data
+
+# BoxM
+
+library(biotools)
+boxM(BC_data[,3:32],Diagnosis)
+
+# The Box's M-test for Homogeneity of Covariance Matrices is a statistical test used to determine whether the covariance matrices of two or more groups are equal
+
+# The test statistic for Box's M-test follows a chi-squared distribution with degrees of freedom equal to the product of the number of groups and the number of variables. In the output, the test statistic is reported as Chi-Sq (approx.) = 7018, with degrees of freedom (df) = 465. This indicates that there are 465 variables in the data and that the test has been performed on multiple groups.
+
+#The p-value for the test is  < 2.2e-16, which means that the observed test statistic is highly significant at conventional levels of significance. This indicates strong evidence against the null hypothesis of homogeneity of covariance matrices, meaning that the covariance matrices for the groups are not equal.
+
+#Therefore, based on the results of the Box's M-test, it can be inferred that there is evidence of significant differences in the covariance matrices between the groups in the data.
+
+
+# MANOVA
+summary(manova(as.matrix(BC_data[,-2])~ Diagnosis))
+
+# The output shows the results of the MANOVA with respect to the effect of the Diagnosis variable on the dependent variables.
+
+#The first row of the output shows the results of the MANOVA, with the Pillai's trace statistic being 0.77383 and the approximate F statistic being 59.158. The denominator degrees of freedom (den Df) are 536, indicating that there are 536 observations in the dataset. The null hypothesis of the MANOVA is that there are no differences in the means of the dependent variables between the groups defined by the Diagnosis variable. 
+
+#The p-value for the MANOVA is reported as < 2.2e-16, which is highly significant. implying a strong evidence against the null hypothesis, indicating that there are significant differences in the means of the dependent variables between the Malignant and Benign groups defined by the Diagnosis variable. 
+
+#The second row of the output shows the results of the residuals, which indicate the variability in the dependent variables that is not explained by the Diagnosis variable. The residual degrees of freedom are 566, indicating that there are 566 observations in the dataset that are not accounted for by the Diagnosis variable.
+
+# In summary, based on the results of the MANOVA, it can be inferred that there are significant differences in the means of the dependent variables between the groups defined by the Diagnosis variable in the BC_data dataset.
+
+## PCA
+#cor(BC_data[-2])
+bca_pca <- prcomp(BC_data[,-2],scale=TRUE)
+#bca_pca
+summary(bca_pca)
+(eigen_bca <- bca_pca$sdev^2)
+names(eigen_bca) <- paste("PC",1:8,sep="")
+#eigen_bca
+sumlambdas <- sum(eigen_bca)
+#sumlambdas
+propvar <- eigen_bca/sumlambdas
+#propvar
+cumvar_bca <- cumsum(propvar)
+#cumvar_bca
+matlambdas <- rbind(eigen_bca,propvar,cumvar_bca)
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+round(matlambdas,4)
+summary(bca_pca)
+#bca_pca$rotation
+#print(bca_pca)
+## Sample scores stored in sparrow_pca$x
+#bca_pca$x
+# Identifying the scores by their survival status
+bcatyp_pca <- cbind(data.frame(Diagnosis),bca_pca$x)
+#bcatyp_pca
+# Means of scores for all the PC's classified by Survival status
+tabmeansPC <- aggregate(bcatyp_pca[,2:33],by=list(Diagnosis=BC_data$Diagnosis),mean)
+#tabmeansPC
+tabmeansPC <- tabmeansPC[rev(order(tabmeansPC$Diagnosis)),]
+#tabmeansPC
+tabfmeans <- t(tabmeansPC[,-1])
+#tabfmeans
+colnames(tabfmeans) <- t(as.vector(tabmeansPC[1]$Diagnosis))
+#tabfmeans
+# Standard deviations of scores for all the PC's classified by Survival status
+tabsdsPC <- aggregate(bcatyp_pca[,2:33],by=list(Diagnosis=BC_data$Diagnosis),sd)
+tabfsds <- t(tabsdsPC[,-1])
+colnames(tabfsds) <- t(as.vector(tabsdsPC[1]$Diagnosis))
+#tabfsds
+t.test(PC1~BC_data$Diagnosis,data=bcatyp_pca) 
+##p-value < 2.2e-16
+t.test(PC2~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC3~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC4~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC5~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC6~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC7~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC8~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC9~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC10~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC11~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC12~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC13~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC14~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC15~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC16~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC17~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC18~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC19~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC20~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC21~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC22~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC23~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC24~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC25~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC26~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC27~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC28~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC29~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC30~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC31~BC_data$Diagnosis,data=bcatyp_pca)
+t.test(PC32~BC_data$Diagnosis,data=bcatyp_pca)
+## F ratio tests
+var.test(PC1~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC2~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC3~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC4~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC5~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC6~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC7~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC8~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC9~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC10~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC11~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC12~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC13~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC14~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC15~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC16~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC17~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC18~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC19~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC20~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC21~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC22~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC23~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC24~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC25~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC26~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC27~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC28~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC29~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC30~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC31~BC_data$Diagnosis,data=bcatyp_pca)
+var.test(PC32~BC_data$Diagnosis,data=bcatyp_pca)
+
+# Better Ways to Visualize
+
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+
+# Correlation
+pairs.panels(BC_data[,-1],
+             gap = 0,
+             bg = c("red", "blue")[BC_data$Diagnosis],
+             pch=21)
+
+pairs.panels(bca_pca$x,
+             gap=0,
+             bg = c("red", "blue")[BC_data$Diagnosis],
+             pch=21)
+
+
+
+
+fviz_eig(bca_pca, addlabels = TRUE)
+fviz_pca_var(bca_pca,col.var = "cos2",
+             gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"),
+             repel = TRUE)
+fviz_pca_ind(bca_pca, col.ind = "cos2", 
+                  gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"), 
+                  repel = TRUE)
+biplot(bca_pca)
+autoplot(bca_pca,
+         data = BC_data[,-1],
+         loadings = TRUE,
+         labels = BC_data$Diagnosis)
+
+
+# Different PCA Method. 
+res.pca <- PCA(BC_data[,-2], graph = FALSE)
+print(res.pca)
+
+# Visualize and Interpret PCA using these functions 
+
+#get_eigenvalue(res.pca): Extract the eigenvalues/variances of principal components
+#fviz_eig(res.pca): Visualize the eigenvalues
+#get_pca_ind(res.pca), get_pca_var(res.pca): Extract the results for individuals and variables, respectively.
+#fviz_pca_ind(res.pca), fviz_pca_var(res.pca): Visualize the results individuals and variables, respectively.
+#fviz_pca_biplot(res.pca): Make a biplot of individuals and variables.
+
+eig.val <- get_eigenvalue(res.pca)
+eig.val
+
+fviz_eig(res.pca, addlabels = TRUE, ylim = c(0, 50))
+
+var <- get_pca_var(res.pca)
+#var$coord: coordinates of variables to create a scatter plot
+#var$cos2: represents the quality of representation for variables on the factor map. It’s calculated as the squared coordinates: var.cos2 = var.coord * var.coord.
+#var$contrib: contains the contributions (in percentage) of the variables to the principal components. 
+#The contribution of a variable (var) to a given principal component is (in percentage) : (var.cos2 * 100) / (total cos2 of the component).
+var
+
+# Coordinates
+head(var$coord)
+# Cos2: quality on the factore map
+head(var$cos2)
+# Contributions to the principal components
+head(var$contrib)
+
+#The plot Below is also known as variable correlation plots. It shows the relationships between all variables. It can be interpreted as follow:
+
+#Positively correlated variables are grouped together.
+#Negatively correlated variables are positioned on opposite sides of the plot origin (opposed quadrants).
+#The distance between variables and the origin measures the quality of the variables on the factor map. 
+#Variables that are away from the origin are well represented on the factor map.
+
+# Correlation circle
+fviz_pca_var(res.pca, col.var = "black")
+
+# Quality of representation
+
+
+corrplot(var$cos2, is.corr=FALSE)
+# Total cos2 of variables on Dim.1 and Dim.2
+#A high cos2 indicates a good representation of the variable on the principal component. 
+#In this case the variable is positioned close to the circumference of the correlation circle.
+#A low cos2 indicates that the variable is not perfectly represented by the PCs. 
+#In this case the variable is close to the center of the circle.
+
+fviz_cos2(res.pca, choice = "var", axes = 1:2)
+fviz_pca_var(res.pca, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE # Avoid text overlapping
+             )
+# Change the transparency by cos2 values
+fviz_pca_var(res.pca, alpha.var = "cos2")
+corrplot(var$contrib, is.corr=FALSE)
+# Contributions of variables to PC1
+fviz_contrib(res.pca, choice = "var", axes = 1, top = 10)
+# Contributions of variables to PC2
+fviz_contrib(res.pca, choice = "var", axes = 2, top = 10)
+fviz_pca_var(res.pca, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")
+             )
+fviz_pca_var(res.pca, alpha.var = "contrib")
+
+fviz_pca_ind(res.pca,
+             geom.ind = "point", # show points only (but not "text")
+             col.ind = BC_data$Diagnosis, # color by groups
+             palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "Groups"
+             )
+
+fviz_pca_var(res.pca, axes.linetype = "blank")
+
+
+
+ind.p <- fviz_pca_ind(res.pca, geom = "point", col.ind = BC_data$Diagnosis)
+ggpubr::ggpar(ind.p,
+              title = "Principal Component Analysis",
+              subtitle = "Breast Cancer data set",
+              caption = "Source: UCI",
+              xlab = "PC1", ylab = "PC2",
+              legend.title = "Diagnosis", legend.position = "top",
+              ggtheme = theme_gray(), palette = "jco"
+              )
+
+fviz_pca_biplot(res.pca, repel = TRUE,col.ind = BC_data$Diagnosis,
+                col.var = "#2E9FDF", # Variables color
+                )
+
+fviz_pca_biplot(res.pca, 
+                col.ind = BC_data$Diagnosis, palette = "jco", 
+                addEllipses = TRUE, label = "var",
+                col.var = "black", repel = TRUE,
+                legend.title = "Diagnosis") 
+
+fviz_pca_biplot(res.pca, 
+                # Fill individuals by groups
+                geom.ind = "point",
+                pointshape = 21,
+                pointsize = 2.5,
+                fill.ind = BC_data$Diagnosis,
+                col.ind = "black",
+                # Color variable by groups
+                legend.title = list(fill = "Diagnosis", color = "Clusters"),
+                repel = TRUE        # Avoid label overplotting
+             )+
+  ggpubr::fill_palette("jco")+      # Indiviual fill color
+  ggpubr::color_palette("npg")      # Variable colors
+
+fviz_pca_biplot(res.pca, 
+                # Individuals
+                geom.ind = "point",
+                fill.ind = BC_data$Diagnosis, col.ind = "black",
+                pointshape = 21, pointsize = 2,
+                palette = "jco",
+                addEllipses = TRUE,
+                # Variables
+                alpha.var ="contrib", col.var = "contrib",
+                gradient.cols = "RdYlBu",
+                
+                legend.title = list(fill = "Diagnosis", color = "Contrib",
+                                    alpha = "Contrib")
+                )
+
+
+
+
+
+
+
+
+
+
