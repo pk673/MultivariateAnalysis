@@ -1,0 +1,132 @@
+---
+title: "MVA Assignment 4 - Factor Analysis"
+author: "pk673@scarletmail.rutgers.edu"
+date: "2023-03-12"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+```
+
+## R Markdown
+```{r}
+
+# Factor Analysis
+
+library(psych)
+wine <- read.csv("~/Downloads/wine.data")
+# View(wine)
+# Assign names to the dimensions
+names(wine) <- c("Class", "Alcohol", "Malic Acid", "Ash", "Alcalinity of Ash", "Magnesium", "Total Phenols", "Flavanoids", "Nonflavanoid Phenols", "Proanthocyanins", "Color Intensity", "Hue", "OD280/OD315 of diluted wines", "Proline")
+head(wine)
+# Check the class of the data object
+class(wine) 
+cols <- c(2:14) #columns 2 to 14 indicate the different attributes of wine
+attach(wine)
+
+fit.pc <- principal(wine[,cols], nfactors = 4, rotate = "varimax")
+fit.pc
+
+# RC1, RC2, RC3, and RC4 are the factor loadings for each of the thirteen variables (columns) in the dataset.
+# 
+# h2 refers to the communality of each variable, which is the proportion of its variance explained by the extracted factors.
+# 
+# u2 refers to the uniqueness of each variable, which is the proportion of its variance not explained by the extracted factors.
+# 
+# communalities are the sum of the squared factor loadings for each variable plus the uniqueness. In other words, com represents the entire proportion of variance in each variable that can be explained by the extracted components and uniqueness.
+# 
+# In factor analysis, the values of h2, u2, and com are crucial diagnostic metrics since they provide information regarding the goodness-of-fit of the extracted factors. A greater value of h2 suggests that the factor analysis can explain a greater proportion of the variance in the variable, whereas a smaller value of u2 shows that there is less unexplained variance in the variable. A high value of com suggests that the factor analysis fits the data better overall.
+
+round(fit.pc$values, 3) #eigenvalues of the four principal components, rounded to three decimal places
+fit.pc$loadings #look for greater value positive correlation  
+#RC1 has high loadings for Total Phenols, Flavanoids, Proanthocyanins, OD280/OD315 of diluted wines, and Proline.All are positively correlated with RC1. We can use RC1 as a measure of the quality of the wine.
+# RC2 has high loadings for Alcohol, Malic Acid, and Color Intensity. They arepositively correlated with RC2,so we can think of RC2 as a way to measure how strong the wine is.
+# RC4 has high loadings for Ash and Magnesium. They are positively correlated with RC4, so we can interpret RC4 as a measure of the mineral content of the wine.
+# RC3 has high loadings for Alcalinity of Ash and Nonflavanoid Phenols. These variables are negatively correlated with RC3, indicating that they contribute to this component in the opposite direction. We can interpret RC3 as a measure of the acidity of the wine.
+# "Proportion Var" column indicates how much of the variance each component explains. For example, RC1 explains 27.1% of the difference in the data, RC2 explains 18.9%, RC4 explains 15.3%, and RC3 explains 12.2%. We can also see that the four parts explain 73.5% of the total difference.This indicates that these four components capture a significant proportion of the variance in the data.
+
+# Loadings with more digits 
+for (i in c(1,3,2,4)) { print(fit.pc$loadings[[1,i]])}
+# This explains how each variable listed above contributes to the overall variance explained by RC1.
+# first variable (Alcohol) has a positive loading on RC1, meaning that higher values of Alcohol are associated with higher scores on RC1. 
+# third variable (Ash) also has a positive loading on RC1, implying  higher values of Ash are also associated with higher scores on RC1.
+# second variable (Malic Acid) has a negative loading on RC1, which means that higher values of Malic Acid are associated with lower scores on RC1. 
+#The fourth variable (Alcalinity of Ash) has a smaller negative loading on RC1, indicating a weaker negative association with RC1 compared to Malic Acid.
+
+# Communalities
+fit.pc$communality
+#Higher communalities mean the factor solution represents the variable well. 
+# Flavanoids has the greatest communality estimate of 0.89, indicating that extracted factors explain most of its variance. Magnesium has a communality estimate of 0.47, indicating that factors explain just a small amount of its variance. 
+# Most variables have strong communalities, indicating that the four extracted factors represent them well.
+
+# Rotated factor scores, Notice the columns ordering: RC1, RC3, RC2 and RC4
+fit.pc$scores
+
+#Each row of the output represents a data set observation, and each column represents a factor.
+
+# These scores show how each observation relates to each factor. An observation with a high factor 1 score may have a high value on variables that load substantially on factor 1. An observation with a negative factor 2 score has a low value on the variables that load heavily on factor 2.
+
+# Play with FA utilities
+
+fa.parallel(wine[,cols]) # See factor recommendation
+# 3 is the point where the eigenvalues from the actual data cross the eigenvalues from the random data
+fa.plot(fit.pc) # See Correlations within Factors
+fa.diagram(fit.pc) # Visualize the relationship
+# The length of the arrow represents the strength of the loading, and the direction of the color indicates the sign of the loading (positive or negative).
+# The plot shows how the variables in the factor analysis model are related to each other and which variables are most strongly associated to each factor.
+
+vss(wine[,cols]) # See Factor recommendations for a simple structure
+# Explained variance increases more steeply up to 4 factors than 3. Therefore, it could be argued that 4 factors would be a better choice for modeling the data, as it explains a slightly larger proportion of the total variance in the data.
+
+
+# Computing Correlation Matrix
+corrm.wine <- cor(wine[,cols])
+corrm.wine
+plot(corrm.wine)
+wine_pca <- prcomp(wine[,cols], scale=TRUE)
+summary(wine_pca)
+plot(wine_pca)
+# A table containing eigenvalues and %'s accounted, follows. Eigenvalues are the sdev^2
+(eigen_wine <- round(wine_pca$sdev^2,3))
+round(fit.pc$values, 3)
+names(eigen_wine) <- paste("PC",1:9,sep="")
+eigen_wine
+sumlambdas <- sum(eigen_wine)
+sumlambdas
+propvar <- round(eigen_wine/sumlambdas,2)
+propvar
+cumvar_wine <- cumsum(propvar)
+cumvar_wine
+matlambdas <- rbind(eigen_wine,propvar,cumvar_wine)
+matlambdas
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+rownames(matlambdas)
+eigvec.emp <- wine_pca$rotation
+print(wine_pca)
+# Taking the first four PCs to generate linear combinations for all the variables with four factors
+pcafactors.emp <- eigvec.emp[,1:4]
+pcafactors.emp
+# Multiplying each column of the eigenvector’s matrix by the square-root of the corresponding eigenvalue in order to get the factor loadings
+unrot.fact.wine <- sweep(pcafactors.emp,MARGIN=2,wine_pca$sdev[1:4],`*`)
+unrot.fact.wine
+# Computing communalities
+communalities.wine <- rowSums(unrot.fact.wine^2)
+communalities.wine
+# Performing the varimax rotation. The default in the varimax function is norm=TRUE thus, Kaiser normalization is carried out
+rot.fact.wine <- varimax(unrot.fact.wine)
+#View(unrot.fact.wine)
+rot.fact.wine
+# The print method of varimax omits loadings less than abs(0.1). In order to display all the loadings, it is necessary to ask explicitly the contents of the object $loadings
+fact.load.wine <- rot.fact.wine$loadings[1:9,1:4]
+fact.load.wine
+# Computing the rotated factor scores for the 30 European Countries. Notice that signs are reversed for factors F2 (PC2), F3 (PC3) and F4 (PC4)
+scale.wine <- scale(wine[,cols])
+#scale.wine
+#as.matrix(scale.wine)%*%fact.load.wine%*%solve(t(fact.load.wine)%*%fact.load.wine)
+
+
+
+
+
