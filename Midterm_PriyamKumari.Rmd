@@ -1,0 +1,380 @@
+---
+title: "Midterm"
+author: "pk673@scarletmail.rutgers.edu"
+date: "04/03/2023"
+output: html_document
+---
+```{r, echo=FALSE}
+knitr::opts_chunk$set(error = TRUE)
+```
+```{r}
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+
+
+pdatas <- read_csv("~/Downloads/Protein_Consumption.csv")
+#View(pdatas)
+str(pdatas)
+attach(pdatas)
+#Get the Correlations between the measurements
+cor(pdatas[-1])
+pdata_pca <- prcomp(pdatas[,-1],scale=TRUE)
+pdata_pca
+summary(pdata_pca)
+#For this pdata_pca object, the output of summary(sparrows_pca) shows that the first principal component (PC1) explains 41.30% of the total variance in the data, the second PC explains an additional 17.4%, and so on.
+
+#The cumulative proportion shows the total amount of variance explained by each PC in sequence, PC1 explains the most variance and subsequent PCs explain progressively less. In this case, the first two PCs explain 82.95% of the total variance, the first three PCs explain 90.68%, the first eight PCs explain 98.80%, and 9 PCs together explain ~100% of the total variance in the data.
+
+eigen_pdata <- pdata_pca$sdev^2
+eigen_pdata
+#these values show how much the transformation "stretches" or "compresses" the data. The direction in which the transformation stretches the most (4.130067e+00) is matched by the direction with the smallest eigenvalue (3.936815e-31), and vice versa.
+names(eigen_pdata) <- paste("PC",1:10,sep="")
+sumlambdas <- sum(eigen_pdata)
+sumlambdas
+propvar <- eigen_pdata/sumlambdas
+propvar
+#The amount of variation that each principal component explains is stored in the propvar variable.
+cumvar_pdatas <- cumsum(propvar)
+cumvar_pdatas
+#Based on the values in cumvar_pdatas, we can see that:
+
+#PC1 explains 41.30% of the total variance in the data set.
+#PC1 and PC2 combined explain 58.70% of the total variance in the data set.
+#PC1 to PC3 combined explain 71.79% of the total variance in the data set.
+#PC1 to PC4 combined explain 82.23% of the total variance in the data set.
+#PC1 to PC5 combined explain 89.22% of the total variance in the data set.
+#PC1 to PC6 combined explain 93.49% of the total variance in the data set.
+#PC1 to PC7 combined explain 96.90% of the total variance in the data set.
+#PC1 to PC8 combined explain 98.80% of the total variance in the data set.
+#PC1 to PC9 combined explain 100% of the total variance in the data set.
+#PC1 to PC10 combined also explain 100% of the total variance in the data set.
+
+matlambdas <- rbind(eigen_pdata,propvar,cumvar_pdatas)
+rownames(matlambdas) <- c("Eigenvalues","Prop. variance","Cum. prop. variance")
+round(matlambdas,4)
+summary(pdata_pca)
+#The first principal component (PC1) has the highest standard deviation and explains 41.3% of the variation in the data. The second and third principal components (PC2 and PC3) also explain a lot of the variation (17.4% and 13.1%, respectively). The first three principal components explain 71.8% of all the differences in the data as a whole.The output also shows that the last two principal components, PC9 and PC10, have very low standard deviations and don't explain much variation. In fact, PC10 doesn't explain nearly any of the difference (0.000e+00). This suggests that these parts might not be the best way to show the data.
+pdata_pca$rotation
+#Cereals and pulses/nuts/oilseeds have large positive weights for the first principal component (PC1), while red meat, white meat, egg, and milk have negative weights. This indicates that PC1 may be associated with a plant-based diet.
+
+#High positive weights are assigned to fish, fruits and vegetables, and white meat on the second principal component (PC2), while red meat and overall have negative weights. This indicates that PC2 is associated with a diet consisting of fish, fruits and vegetables, and white meat, but not red meat.
+
+#The third principal component (PC3) gives white meat high positive weights and fruits and vegetables negative weights. This shows that PC3 is associated with a diet rich in white meat but lacking in fruits and vegetables.
+
+#On the fourth principal component (PC4), fruits and vegetables and starchy foods have high positive weights, while red meat and fish have negative weights. This indicates that PC4 is associated with a diet consisting of fruits, vegetables, and starchy foods, but not red meat and fish.
+
+#The remaining principal components (PC5 to PC10) have extremely modest variations and hence account for a negligible portion of the total data variation.
+print(pdata_pca)
+pdata_pca$x
+var <- get_pca_var(pdata_pca)
+var
+#plot(eigen_pdata, xlab = "Component number", ylab = "Component variance", type = "l", main = "Scree diagram")
+#We can see that in the scree plot above elbow is forming at 5 hence first 4  components should be kept for the analysis.
+
+# Correlation
+pairs.panels(pdatas[,-11],
+             gap = 0,
+             bg = c("red", "blue")[pdatas$Country],
+             pch=21)
+
+diag(cov(pdata_pca$x))
+xlim <- range(pdata_pca$x[,1])
+plot(pdata_pca$x,xlim=xlim,ylim=xlim)
+
+library(vctrs)
+library(purrr)
+
+#Correlation circle
+head(var$coord, 4)
+fviz_eig(pdata_pca, addlabels = TRUE)
+
+fviz_pca_var(pdata_pca,col.var = "cos2",
+             gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"),
+             repel = TRUE)
+
+#We can use this graph to interpret contribuition of each varible to PCs obtained from PCA. Also we can see that White Meat, Milk, Egg and Red Meats are highly correlated to each other just like Starchy Food and Fish, Cereals and Pulses are.
+biplot(pdata_pca)
+
+#Quality of representation
+head(var$cos2, 4)
+corrplot(var$cos2, is.corr=FALSE)
+# Color by cos2 values: quality on the factor map
+fviz_pca_var(pdata_pca, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE # Avoid text overlapping
+)
+
+#Contributions of variables to PCs
+head(var$contrib, 4)
+library("corrplot")
+corrplot(var$contrib, is.corr=FALSE)   
+fviz_pca_var(pdata_pca, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07")
+)
+# Contributions of variables to PC1
+fviz_contrib(pdata_pca, choice = "var", axes = 1, top = 10)
+# Contributions of variables to PC2
+fviz_contrib(pdata_pca, choice = "var", axes = 2, top = 10)
+fviz_contrib(pdata_pca, choice = "var", axes = 1:2, top = 10)
+
+
+#Graphs of individuals
+
+ind <- get_pca_ind(pdata_pca)
+ind
+
+# Coordinates of individuals
+head(ind$coord)
+# Quality of individuals
+head(ind$cos2)
+# Contributions of individuals
+head(ind$contrib)
+
+
+fviz_pca_ind(pdata_pca, col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE # Avoid text overlapping (slow if many points)
+)
+
+
+
+```
+
+```{r}
+#CLUSTERING
+#Distance measure
+library(NbClust)
+library(cluster)
+library(readr)
+library(factoextra)
+library(magrittr)
+protein_dist <- get_dist(pdatas[c(-1,-11)], stand = TRUE, method = "euclidean")
+protein_dist
+#The result is a symmetric matrix where each element reflects the Euclidean distance between two rows in pdatas.
+protein_sn <- hclust(protein_dist, method = "single")
+plot(protein_sn, hang=-1,xlab="Object",ylab="Distance",
+     main="Dendrogram. Nearest neighbor linkage")
+#This particular dendrogram uses the "single" linkage approach, which joins two clusters based on the shortest distance between their members.
+#least distance betwweb 2 and 14 so they form the first cluster then 24 adds to the cluster
+#The vertical height of each branch in the dendrogram indicates the distance between the combined groups. Items that are clustered at a lower height are more similar to one another than those that are gathered at a higher height.
+
+protein_fn <- hclust(protein_dist)
+plot(protein_fn, hang=-1,xlab="Object",ylab="Distance",
+     main="Dendrogram. Farthest neighbor linkage")
+#This particular dendrogram uses distance matrix using the farthest neighbor linkage method
+protein_av <- hclust(protein_dist)
+plot(protein_av, hang=-1,xlab="Object",ylab="Distance",
+     main="Dendrogram. Group average linkage")
+
+#It is evident that all three approaches produce the same cluster formation sequence and virtually identical clusters.If all three hierarchical clustering methods (single, complete, and average linkage) generate the same dendrogram, the generated clusters are likely significant and representative of the data's true underlying structure
+
+plot(as.dendrogram(protein_sn),ylab="Distance between each datapoint",ylim=c(0,10))
+
+plot(as.dendrogram(protein_fn),ylab="Distance between each datapoint",ylim=c(0,10))
+
+#The ylim parameter value of 10 indicates that the maximum distance between any two data points is 4, and all distances are scaled to fit inside this range.
+#Data Scaling
+matstd_protein <- scale(pdatas[c(-1,-11)])
+matstd_protein
+
+#Kmeans
+km.res <- kmeans(matstd_protein,3, nstart = 25)
+km.res
+
+#Here, the k-means method clustered the data into three clusters, with sums of squares within each cluster ranging from 4.16 to 63.08.
+
+# Determining the optimal numbers of Clusters
+
+fviz_nbclust(matstd_protein, kmeans, method = "gap_stat")
+
+fviz_nbclust <- function (x, FUNcluster = NULL, method = c("silhouette", "wss", 
+                                                           "gap_stat"), diss = NULL, k.max = 10, nboot = 100, verbose = interactive(), 
+                          barfill = "steelblue", barcolor = "steelblue", linecolor = "steelblue", 
+                          print.summary = TRUE, ...) 
+{
+  set.seed(123)
+  if (k.max < 2) 
+    stop("k.max must bet > = 2")
+  method = match.arg(method)
+  if (!inherits(x, c("data.frame", "matrix")) & !("Best.nc" %in% 
+                                                  names(x))) 
+    stop("x should be an object of class matrix/data.frame or ", 
+         "an object created by the function NbClust() [NbClust package].")
+  if (inherits(x, "list") & "Best.nc" %in% names(x)) {
+    best_nc <- x$Best.nc
+    if (any(class(best_nc) == "numeric") ) 
+      print(best_nc)
+    else if (any(class(best_nc) == "matrix") )
+      .viz_NbClust(x, print.summary, barfill, barcolor)
+  }
+  else if (is.null(FUNcluster)) 
+    stop("The argument FUNcluster is required. ", "Possible values are kmeans, pam, hcut, clara, ...")
+  else if (!is.function(FUNcluster)) {
+    stop("The argument FUNcluster should be a function. ", 
+         "Check if you're not overriding the specified function name somewhere.")
+  }
+  else if (method %in% c("silhouette", "wss")) {
+    if (is.data.frame(x)) 
+      x <- as.matrix(x)
+    if (is.null(diss)) 
+      diss <- stats::dist(x)
+    v <- rep(0, k.max)
+    if (method == "silhouette") {
+      for (i in 2:k.max) {
+        clust <- FUNcluster(x, i, ...)
+        v[i] <- .get_ave_sil_width(diss, clust$cluster)
+      }
+    }
+    else if (method == "wss") {
+      for (i in 1:k.max) {
+        clust <- FUNcluster(x, i, ...)
+        v[i] <- .get_withinSS(diss, clust$cluster)
+      }
+    }
+    df <- data.frame(clusters = as.factor(1:k.max), y = v, 
+                     stringsAsFactors = TRUE)
+    ylab <- "Total Within Sum of Square"
+    if (method == "silhouette") 
+      ylab <- "Average silhouette width"
+    p <- ggpubr::ggline(df, x = "clusters", y = "y", group = 1, 
+                        color = linecolor, ylab = ylab, xlab = "Number of clusters k", 
+                        main = "Optimal number of clusters")
+    if (method == "silhouette") 
+      p <- p + geom_vline(xintercept = which.max(v), linetype = 2, 
+                          color = linecolor)
+    return(p)
+  }
+  else if (method == "gap_stat") {
+    extra_args <- list(...)
+    gap_stat <- cluster::clusGap(x, FUNcluster, K.max = k.max, 
+                                 B = nboot, verbose = verbose, ...)
+    if (!is.null(extra_args$maxSE)) 
+      maxSE <- extra_args$maxSE
+    else maxSE <- list(method = "firstSEmax", SE.factor = 1)
+    p <- fviz_gap_stat(gap_stat, linecolor = linecolor, 
+                       maxSE = maxSE)
+    return(p)
+  }
+}
+
+.viz_NbClust <- function (x, print.summary = TRUE, barfill = "steelblue", 
+                          barcolor = "steelblue") 
+{
+  best_nc <- x$Best.nc
+  if (any(class(best_nc) == "numeric") )
+    print(best_nc)
+  else if (any(class(best_nc) == "matrix") ) {
+    best_nc <- as.data.frame(t(best_nc), stringsAsFactors = TRUE)
+    best_nc$Number_clusters <- as.factor(best_nc$Number_clusters)
+    if (print.summary) {
+      ss <- summary(best_nc$Number_clusters)
+      cat("Among all indices: \n===================\n")
+      for (i in 1:length(ss)) {
+        cat("*", ss[i], "proposed ", names(ss)[i], 
+            "as the best number of clusters\n")
+      }
+      cat("\nConclusion\n=========================\n")
+      cat("* According to the majority rule, the best number of clusters is ", 
+          names(which.max(ss)), ".\n\n")
+    }
+    df <- data.frame(Number_clusters = names(ss), freq = ss, 
+                     stringsAsFactors = TRUE)
+    p <- ggpubr::ggbarplot(df, x = "Number_clusters", 
+                           y = "freq", fill = barfill, color = barcolor) + 
+      labs(x = "Number of clusters k", y = "Frequency among all indices", 
+           title = paste0("Optimal number of clusters - k = ", 
+                          names(which.max(ss))))
+    return(p)
+  }
+}
+res.nbclust <- pdatas[c(-1,-11)] %>% scale() %>% NbClust(distance = "euclidean", min.nc = 2, max.nc = 10, method = "complete", index ="all") 
+fviz_nbclust(res.nbclust, ggtheme = theme_minimal())
+pam.res <- pam(matstd_protein, 2)
+# Visualize
+fviz_cluster(pam.res)
+
+
+
+res.hc <- matstd_protein %>% scale() %>% dist(method = "euclidean") %>%
+  hclust(method = "ward.D2")
+
+fviz_dend(res.hc, k = 2, # Cut in four groups
+          cex = 0.5, # label size
+          k_colors = c("#2E9FDF", "#00AFBB", "#E7B800", "#FC4E07"),
+          color_labels_by_k = TRUE, # color labels by groups
+          rect = TRUE # Add rectangle around groups
+)
+```
+
+
+```{r}
+#Factor Analysis
+
+fit.pc <- principal(pdatas[-1], nfactors=4, rotate="varimax")
+fit.pc
+## RC1, RC2, RC3, and RC4 are the factor loadings for each of the thirteen variables (columns) in the dataset.
+# 
+# h2 refers to the communality of each variable(explained variance)
+# 
+# u2 refers to the uniqueness of each variable(unexplained variance)
+# 
+#com represents the entire proportion of variance in each variable(explained+unexplained variance).
+#In this case, the first factor explains 34% of the variance, the second factor explains 25%, the third factor explains 24%, and the fourth factor explains 217%. Together, the four factors explain 100% of the variance.
+
+#mean item complexity is 1.7, which suggests that the factor structure is moderately complex for each variable which further implies that the relationships between the variables and the underlying factors are not entirely straightforward or simple.
+
+round(fit.pc$values, 3)
+fit.pc$loadings
+#RC1 is associated with White Meat, Egg, and Pulses Nuts and Oilseeds,and Milk while RC2 is associated with White Meat, Fish, and Total. RC3 is associated with Fruits and Vegetables, and RC4 is associated with Egg.
+# Loadings with more digits
+for (i in c(1,3,2,4)) { print(fit.pc$loadings[[1,i]])}
+#loadings for "Red Meat" on RC1 is 0.259, ON RC2 is 0.213 on RC3  is 0.937 and on RC4 is -0.111.
+# Communalities
+fit.pc$communality
+comm_sorted <- sort(fit.pc$communality, decreasing = TRUE)
+comm_sorted_names <- names(fit.pc$communality)[order(-fit.pc$communality)]
+# Rotated factor scores
+fit.pc$scores
+# Play with FA utilities
+
+fa.parallel(pdatas[-1]) # See factor recommendation
+fa.plot(fit.pc)
+fa.diagram(fit.pc)
+# The length of the arrow represents the strength of the loading, and the color indicates the sign of the loading (positive or negative).
+# The plot shows how the variables in the factor analysis model are related to each other and which variables are most strongly associated to each factor.
+
+#White meat and egg have a strong positive loading on RC1 while Pulses nut and oilseeds is having a negative loading on RC1
+#Fish and starchy foods have a strong positive loading on RC2 while Cereals is having a negative loading on RC2
+#Total and Red Meat and Milk have a strong positive loading on RC3
+#Fruit vegetables have a strong positive loading on RC3
+
+vss(pdatas[-1])
+#The output implies that the optimum number of factors is between 4 and 5.
+
+```
